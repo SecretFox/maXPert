@@ -1,5 +1,6 @@
 import com.GameInterface.DistributedValue;
 import com.Utils.Format;
+import com.Utils.LDBFormat;
 import mx.utils.Delegate;
 import com.GameInterface.Game.Character;
 import com.Utils.ID32;
@@ -125,7 +126,7 @@ class com.fox.maXPert.maXPert {
 						progress = m_ResultItem.m_XP - m_StartItem.m_XP;
 						needed -= progress;
 					}
-					m_remainingTalismanExp.text = Format.FormatNumeric(needed) + " Xp";
+					m_remainingTalismanExp.text = Format.FormatNumeric(needed)  + " " +  LDBFormat.LDBGetText("Crafting", "XP");
 					if (needed < 0) {
 						CheckForWarning(m_remainingTalismanExp, needed, m_StartItem.m_RealType, m_StartItem.m_Rarity,progress);
 					}
@@ -140,7 +141,7 @@ class com.fox.maXPert.maXPert {
 					progress = m_ResultItem.m_XP - m_StartItem.m_XP;
 					needed -= progress
 				}
-				m_remainingTalismanExp.text = Format.FormatNumeric(needed) + " Xp";
+				m_remainingTalismanExp.text = Format.FormatNumeric(needed)  + " " +  LDBFormat.LDBGetText("Crafting", "XP");
 				if (needed < 0) {
 					CheckForWarning(m_remainingTalismanExp,needed,m_StartItem.m_RealType,m_StartItem.m_Rarity,progress);
 				}
@@ -154,7 +155,7 @@ class com.fox.maXPert.maXPert {
 					progress = m_ResultItem.m_SignetXP - m_StartItem.m_SignetXP;
 					needed -= progress
 				}
-				m_remainingTalismanExp.text = Format.FormatNumeric(needed) + " Xp";
+				m_remainingTalismanExp.text = Format.FormatNumeric(needed)  + " " +  LDBFormat.LDBGetText("Crafting", "XP");
 				if (needed < 0) {
 					CheckForWarning(m_remainingTalismanExp,needed,m_StartItem.m_RealType,m_StartItem.m_Rarity,progress)
 				}
@@ -172,7 +173,7 @@ class com.fox.maXPert.maXPert {
 					progress = m_ResultItem.m_GlyphXP - m_StartItem.m_GlyphXP;
 					needed -= progress;
 				}
-				m_remainingGlyphExp.text = Format.FormatNumeric(needed) + " Xp";
+				m_remainingGlyphExp.text = Format.FormatNumeric(needed)  + " " +  LDBFormat.LDBGetText("Crafting", "XP");
 				if (needed < 0) {
 					CheckForWarning(m_remainingGlyphExp, needed, 30129, m_StartItem.m_GlyphRarity,progress);
 				}
@@ -204,7 +205,7 @@ class com.fox.maXPert.maXPert {
 					progress = m_ResultItem.m_SignetXP - m_StartItem.m_SignetXP;
 					needed -= progress;
 				}
-				m_remainingSignetExp.text = Format.FormatNumeric(needed) + " Xp";
+				m_remainingSignetExp.text = Format.FormatNumeric(needed) + " " + LDBFormat.LDBGetText("Crafting", "XP");
 				if (needed < 0) {
 					CheckForWarning(m_remainingSignetExp, needed, 30133, m_StartItem.m_SignetRarity,progress);
 				}
@@ -215,31 +216,45 @@ class com.fox.maXPert.maXPert {
 
 	private function createLabels() {
 		//container
-		var x = _root.itemupgrade.m_Window.m_Content;
-		var format:TextFormat = x.m_LevelUpgrade.m_CurrentLevel.getTextFormat();
-		m_expContainer = x.createEmptyMovieClip("m_maXPert", x.getNextHighestDepth());
-		m_expContainer._y = 0;
-		m_expContainer._x = x.m_LevelUpgrade._x;
+		var UpgradeContent:MovieClip = _root.itemupgrade.m_Window.m_Content;
+		var format:TextFormat = UpgradeContent.m_GlyphUpgradeProgress.m_Text.getTextFormat();
+		var x = UpgradeContent.m_GlyphLevelUpgrade._x;
+		
 		//talisman exp label
-		m_remainingTalismanExp = m_expContainer.createTextField('m_remainingTalismanExp', m_expContainer.getNextHighestDepth(), 0,x.m_LevelUpgrade._y+41, 20, 20);
+		m_remainingTalismanExp = UpgradeContent.createTextField(
+			'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_UpgradeProgress._y + UpgradeContent.m_UpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_UpgradeProgress._height
+		);
 		m_remainingTalismanExp.selectable = false;
 		m_remainingTalismanExp.autoSize = 'left';
+		m_remainingTalismanExp.embedFonts = true;
 		m_remainingTalismanExp.setTextFormat(format);
 		m_remainingTalismanExp.setNewTextFormat(format);
 		//Glyph exp label
-		m_remainingGlyphExp = m_expContainer.createTextField('m_remainingGlyphExp', m_expContainer.getNextHighestDepth(), 0,x.m_GlyphLevelUpgrade._y+41, 20, 20);
+		m_remainingGlyphExp = UpgradeContent.createTextField(
+			'm_RemainingGlyphExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_GlyphUpgradeProgress._y + UpgradeContent.m_GlyphUpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_GlyphUpgradeProgress._height
+		);
 		m_remainingGlyphExp.selectable = false;
 		m_remainingGlyphExp.autoSize = 'left';
+		m_remainingGlyphExp.embedFonts = true;
 		m_remainingGlyphExp.setTextFormat(format);
 		m_remainingGlyphExp.setNewTextFormat(format);
 		//Signet exp label
-		m_remainingSignetExp = m_expContainer.createTextField('m_remainingSignetExp', m_expContainer.getNextHighestDepth(), 0,x.m_SignetLevelUpgrade._y+41, 20, 20);
+		m_remainingSignetExp = UpgradeContent.createTextField(
+			'm_RemainingSignetExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_SignetUpgradeProgress._y + UpgradeContent.m_SignetUpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_SignetUpgradeProgress._height
+		);
 		m_remainingSignetExp.selectable = false;
 		m_remainingSignetExp.autoSize = 'left';
+		m_remainingSignetExp.embedFonts = true;
 		m_remainingSignetExp.setTextFormat(format);
 		m_remainingSignetExp.setNewTextFormat(format);
 		//Tooltip, can't have hover info on textfields(?) so drawing box behind it
-		warningClip = x.createEmptyMovieClip("Warning", x.getNextHighestDepth());
+		warningClip = UpgradeContent.createEmptyMovieClip("Warning", UpgradeContent.getNextHighestDepth());
 		warningClip.beginFill(0xFFFFFF, 0);
 		warningClip.moveTo(0, 0);
 		warningClip.lineTo(100, 0);
