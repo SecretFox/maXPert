@@ -25,6 +25,8 @@ class com.fox.maXPert.maXPert {
 
 	public function maXPert(swfRoot: MovieClip) {
 		m_swfroot = swfRoot;
+		m_upgradewindow = DistributedValue.Create("ItemUpgradeWindow");
+		m_UpgradeInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_CraftingInventory, Character.GetClientCharID().GetInstance()));
 	}
 
 	private function RefreshXP(result:Number, numItems:Number, feedback:String, items:Array, percentChance:Number) {
@@ -37,12 +39,12 @@ class com.fox.maXPert.maXPert {
 		m_remainingSignetExp.text = "";
 		m_remainingTalismanExp.textColor = 0x6bb9ff;
 		m_remainingGlyphExp.textColor = 0x6bb9ff;
-		m_remainingSignetExp.textColor=0x6bb9ff;
+		m_remainingSignetExp.textColor = 0x6bb9ff;
 		var title:TextField = _root.itemupgrade.m_Window.m_Title;
 		title.textColor = 0xFFFFFF;
-		
-		//This function can trigger like..20 times when ..something bugs out
-		// using timeout to limit the function to only run once per 100ms
+
+		// This function can trigger like..20 times when something bugs out..hopefully nothing caused by this mod.
+		// Using timeout to limit the function to only run once per 100ms
 		refresh = setTimeout(Delegate.create(this, RefreshXPFunc), 100,items);
 	}
 
@@ -56,11 +58,9 @@ class com.fox.maXPert.maXPert {
 	}
 
 	public function Load() {
-		m_upgradewindow = DistributedValue.Create("ItemUpgradeWindow");
 		m_upgradewindow.SignalChanged.Connect(UpgradeWindowOpened, this);
-		setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
-		m_UpgradeInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_CraftingInventory, Character.GetClientCharID().GetInstance()));
 		CraftingInterface.SignalCraftingResultFeedback.Connect(RefreshXP, this);
+		setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 	}
 
 	//checks if item is overcapped by at least a level
@@ -84,7 +84,7 @@ class com.fox.maXPert.maXPert {
 				this.Tooltip.Close();
 			});
 		} else {
-			clip.textColor=0xFBFB00
+			clip.textColor = 0xFBFB00;
 		}
 	}
 
@@ -93,8 +93,8 @@ class com.fox.maXPert.maXPert {
 		var m_StartItem:InventoryItem = InventoryItem(m_UpgradeInventory.GetItemAt(0))
 		//checking if the item has glyph or signet slotted
 		if (m_StartItem) {
-			var GlyphSlotted = m_StartItem.m_ACGItem.m_TemplateID1 == 0 ? false : true;
-			var SignetSlotted = m_StartItem.m_ACGItem.m_TemplateID2 == 0 ? false : true;
+			var GlyphSlotted = m_StartItem.m_ACGItem.m_TemplateID1;
+			var SignetSlotted = m_StartItem.m_ACGItem.m_TemplateID2;
 		//MAIN SLOT
 			// If is NOT Glyph or Signet
 			if (m_StartItem.m_RealType != 30129 && m_StartItem.m_RealType != 30133) {
@@ -117,7 +117,7 @@ class com.fox.maXPert.maXPert {
 						MaxLevel = 70;
 						break
 				}
-				if (MaxLevel && m_StartItem.m_Rank!=MaxLevel) {
+				if (MaxLevel && m_StartItem.m_Rank != MaxLevel) {
 					var XpToNextRarity = Inventory.GetItemXPForLevel(m_StartItem.m_RealType, m_StartItem.m_Rarity, MaxLevel);
 					var needed = XpToNextRarity - m_StartItem.m_XP;
 					var progress:Number;
@@ -132,7 +132,7 @@ class com.fox.maXPert.maXPert {
 				}
 			}
 			// else if Glyph
-			else if (m_StartItem.m_RealType == 30129 && m_StartItem.m_Rank!=20) {
+			else if (m_StartItem.m_RealType == 30129 && m_StartItem.m_Rank != 20) {
 				var XpToNextRarity = Inventory.GetItemXPForLevel(30129, m_StartItem.m_GlyphRarity, 20);
 				var needed = XpToNextRarity - m_StartItem.m_GlyphXP;
 				var progress:Number;
@@ -160,36 +160,27 @@ class com.fox.maXPert.maXPert {
 				}
 			}
 		//MAIN SLOT END
-
 		//GLYPH SLOT START
-			//IF current item
-			//a) Has a glyph slotted 
+			//if current item
+			//a) Has a glyph slotted
 			//b) Is not a glyph or signet(Handled by MAIN)
-			if (GlyphSlotted == true && m_StartItem.m_RealType != 30129 && m_StartItem.m_RealType != 30133) {
-				if (m_StartItem.m_GlyphRank!=20) {
-					var XpToNextRarity = Inventory.GetItemXPForLevel(30129, m_StartItem.m_GlyphRarity, 20);
-					var needed = XpToNextRarity - m_StartItem.m_GlyphXP;
-					m_remainingGlyphExp.text = Format.FormatNumeric(needed) + " Xp";
+			if (GlyphSlotted && m_StartItem.m_RealType != 30133 && m_StartItem.m_RealType != 30129 && m_StartItem.m_GlyphRank != 20) {
+				var XpToNextRarity = Inventory.GetItemXPForLevel(30129, m_StartItem.m_GlyphRarity, 20);
+				var needed = XpToNextRarity - m_StartItem.m_GlyphXP;
+				var progress:Number;
+				if (m_ResultItem) {
+					progress = m_ResultItem.m_GlyphXP - m_StartItem.m_GlyphXP;
+					needed -= progress;
 				}
-				/* Broken for now
-				if(m_StartItem.m_GlyphRank!=20){
-					if(m_ResultItem && m_ResultItem.m_GlyphXP > m_StartItem.m_GlyphXP){
-						var progress = m_ResultItem.m_GlyphXP - m_StartItem.m_GlyphXP;
-						needed -= progress
-						m_remainingGlyphExp.text = Format.FormatNumeric(needed) + " Xp";
-					}
-					else{
-						m_remainingGlyphExp.text = Format.FormatNumeric(needed) + " Xp";
-					}
-					color(m_remainingGlyphExp, needed);
+				m_remainingGlyphExp.text = Format.FormatNumeric(needed) + " Xp";
+				if (needed < 0) {
+					CheckForWarning(m_remainingGlyphExp, needed, 30129, m_StartItem.m_GlyphRarity,progress);
 				}
-				*/
 			}
 		//GLYPH SLOT END
 
 		//SIGNET SLOT START
 			// Return if upgrade item is a weapon,as weapon signets should be ignored
-			var weapon:Boolean;
 			switch (m_StartItem.m_RealType) {
 				case 30104:
 				case 30106:
@@ -226,9 +217,7 @@ class com.fox.maXPert.maXPert {
 		//container
 		var x = _root.itemupgrade.m_Window.m_Content;
 		var format:TextFormat = x.m_LevelUpgrade.m_CurrentLevel.getTextFormat();
-		var format2:TextFormat = x.m_LevelUpgrade.m_CurrentLevel.getTextFormat();
-		format2.bold = true;
-		m_expContainer = x.createEmptyMovieClip("maXPert", x.getNextHighestDepth());
+		m_expContainer = x.createEmptyMovieClip("m_maXPert", x.getNextHighestDepth());
 		m_expContainer._y = 0;
 		m_expContainer._x = x.m_LevelUpgrade._x;
 		//talisman exp label
@@ -237,22 +226,19 @@ class com.fox.maXPert.maXPert {
 		m_remainingTalismanExp.autoSize = 'left';
 		m_remainingTalismanExp.setTextFormat(format);
 		m_remainingTalismanExp.setNewTextFormat(format);
-		m_remainingTalismanExp.text  = '';
 		//Glyph exp label
 		m_remainingGlyphExp = m_expContainer.createTextField('m_remainingGlyphExp', m_expContainer.getNextHighestDepth(), 0,x.m_GlyphLevelUpgrade._y+41, 20, 20);
 		m_remainingGlyphExp.selectable = false;
 		m_remainingGlyphExp.autoSize = 'left';
 		m_remainingGlyphExp.setTextFormat(format);
 		m_remainingGlyphExp.setNewTextFormat(format);
-		m_remainingGlyphExp.text  = '';
 		//Signet exp label
 		m_remainingSignetExp = m_expContainer.createTextField('m_remainingSignetExp', m_expContainer.getNextHighestDepth(), 0,x.m_SignetLevelUpgrade._y+41, 20, 20);
 		m_remainingSignetExp.selectable = false;
 		m_remainingSignetExp.autoSize = 'left';
 		m_remainingSignetExp.setTextFormat(format);
 		m_remainingSignetExp.setNewTextFormat(format);
-		m_remainingSignetExp.text  = '';
-		//Tooltip, can't have hover info on textfields(title) so drawing box behind it
+		//Tooltip, can't have hover info on textfields(?) so drawing box behind it
 		warningClip = x.createEmptyMovieClip("Warning", x.getNextHighestDepth());
 		warningClip.beginFill(0xFFFFFF, 0);
 		warningClip.moveTo(0, 0);
