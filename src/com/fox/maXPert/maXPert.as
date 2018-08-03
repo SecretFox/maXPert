@@ -1,6 +1,9 @@
+import com.Components.ItemSlot;
 import com.GameInterface.DistributedValue;
 import com.Utils.Format;
 import com.Utils.LDBFormat;
+import flash.geom.Point;
+import gfx.managers.DragManager;
 import mx.utils.Delegate;
 import com.GameInterface.Game.Character;
 import com.Utils.ID32;
@@ -10,6 +13,7 @@ import com.GameInterface.CraftingInterface;
 import com.GameInterface.Tooltip.TooltipInterface;
 import com.GameInterface.Tooltip.TooltipData;
 import com.GameInterface.Tooltip.TooltipManager;
+import com.Utils.DragObject;
 
 class com.fox.maXPert.maXPert {
 
@@ -19,15 +23,42 @@ class com.fox.maXPert.maXPert {
 	private var m_remainingGlyphExp:TextField
 	private var m_remainingSignetExp:TextField
 	private var m_UpgradeInventory:Inventory;
+	private var m_Inventory:Inventory;
 	private var refresh;
 	private var m_swfroot:MovieClip;
 	private var Tooltip:TooltipInterface;
 	private var warningClip:MovieClip;
+	private var resultItemID;
+	private var ItemPositions = new Array();
 
 	public function maXPert(swfRoot: MovieClip) {
 		m_swfroot = swfRoot;
 		m_upgradewindow = DistributedValue.Create("ItemUpgradeWindow");
 		m_UpgradeInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_CraftingInventory, Character.GetClientCharID().GetInstance()));
+		m_Inventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_BackpackContainer, Character.GetClientCharID().GetInstance()));
+
+		/*
+		com.GameInterface.UtilsBase.PrintChatText("Weapon / Talisman");
+		com.GameInterface.UtilsBase.PrintChatText("Standard "+string(Inventory.GetItemXPForLevel(30131, 2, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Superior "+string(Inventory.GetItemXPForLevel(30131, 3, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Epic "+string(Inventory.GetItemXPForLevel(30131, 4, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Mythic "+string(Inventory.GetItemXPForLevel(30131, 5, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Legendary "+string(Inventory.GetItemXPForLevel(30131, 6, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("--------");
+		com.GameInterface.UtilsBase.PrintChatText("Glyph");
+		com.GameInterface.UtilsBase.PrintChatText("Standard "+string(Inventory.GetItemXPForLevel(30129, 2, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Superior "+string(Inventory.GetItemXPForLevel(30129, 3, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Epic "+string(Inventory.GetItemXPForLevel(30129, 4, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Mythic "+string(Inventory.GetItemXPForLevel(30129, 5, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Legendary " + string(Inventory.GetItemXPForLevel(30129, 6, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("--------");
+		com.GameInterface.UtilsBase.PrintChatText("Signet");
+		com.GameInterface.UtilsBase.PrintChatText("Standard "+string(Inventory.GetItemXPForLevel(30133, 2, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Superior "+string(Inventory.GetItemXPForLevel(30133, 3, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Epic "+string(Inventory.GetItemXPForLevel(30133, 4, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Mythic "+string(Inventory.GetItemXPForLevel(30133, 5, 2)));
+		com.GameInterface.UtilsBase.PrintChatText("Legendary " + string(Inventory.GetItemXPForLevel(30133, 6, 2)));
+		*/
 	}
 
 	private function RefreshXP(result:Number, numItems:Number, feedback:String, items:Array, percentChance:Number) {
@@ -44,9 +75,15 @@ class com.fox.maXPert.maXPert {
 		var title:TextField = _root.itemupgrade.m_Window.m_Title;
 		title.textColor = 0xFFFFFF;
 
-		// This function can trigger like..20 times when something bugs out..hopefully nothing caused by this mod.
+		// This function can trigger like 20 times when something bugs out..hopefully nothing caused by this mod.
 		// Using timeout to limit the function to only run once per 100ms
-		refresh = setTimeout(Delegate.create(this, RefreshXPFunc), 100,items);
+		refresh = setTimeout(Delegate.create(this, RefreshXPFunc), 100, items);
+	}
+
+	public function Load() {
+		m_upgradewindow.SignalChanged.Connect(UpgradeWindowOpened, this);
+		CraftingInterface.SignalCraftingResultFeedback.Connect(RefreshXP, this);
+		setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 	}
 
 	public function Unload() {
@@ -58,13 +95,7 @@ class com.fox.maXPert.maXPert {
 		CraftingInterface.SignalCraftingResultFeedback.Disconnect(RefreshXP, this);
 	}
 
-	public function Load() {
-		m_upgradewindow.SignalChanged.Connect(UpgradeWindowOpened, this);
-		CraftingInterface.SignalCraftingResultFeedback.Connect(RefreshXP, this);
-		setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
-	}
-
-	//checks if item is overcapped by at least a level
+	// Checks if item is overcapped by at least a level
 	private function CheckForWarning(clip:TextField,value,itemtype,rarity,amount) {
 		var XpPerLevel = Inventory.GetItemXPForLevel(itemtype, rarity, 2);
 		if (value == XpPerLevel*-1) {
@@ -91,9 +122,12 @@ class com.fox.maXPert.maXPert {
 
 	private function RefreshXPFunc(items):Void {
 		var m_ResultItem:InventoryItem = items[0];
-		var m_StartItem:InventoryItem = InventoryItem(m_UpgradeInventory.GetItemAt(0))
-		//checking if the item has glyph or signet slotted
+		var m_StartItem:InventoryItem = InventoryItem(m_UpgradeInventory.GetItemAt(0));
+		if (m_ResultItem) resultItemID = CreateID(m_ResultItem);
+		else resultItemID = CreateID(m_StartItem);
+		
 		if (m_StartItem) {
+			//checking if the item has glyph or signet slotted
 			var GlyphSlotted = m_StartItem.m_ACGItem.m_TemplateID1;
 			var SignetSlotted = m_StartItem.m_ACGItem.m_TemplateID2;
 		//MAIN SLOT
@@ -179,7 +213,6 @@ class com.fox.maXPert.maXPert {
 				}
 			}
 		//GLYPH SLOT END
-
 		//SIGNET SLOT START
 			// Return if upgrade item is a weapon,as weapon signets should be ignored
 			switch (m_StartItem.m_RealType) {
@@ -219,7 +252,7 @@ class com.fox.maXPert.maXPert {
 		var UpgradeContent:MovieClip = _root.itemupgrade.m_Window.m_Content;
 		var format:TextFormat = UpgradeContent.m_GlyphUpgradeProgress.m_Text.getTextFormat();
 		var x = UpgradeContent.m_GlyphLevelUpgrade._x;
-		
+
 		//talisman exp label
 		m_remainingTalismanExp = UpgradeContent.createTextField(
 			'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
@@ -262,21 +295,94 @@ class com.fox.maXPert.maXPert {
 		warningClip.lineTo(0, 25);
 		warningClip.lineTo(0, 0);
 		warningClip.endFill();
-		warningClip._y -= 35;
+		warningClip._y -= 35; // Should probably draw this on the title clip.
+	}
+
+	private function CreateID(Item:InventoryItem){
+		if(Item) return string(Item.m_ACGItem.m_TemplateID0) + Item.m_ACGItem.m_TemplateID1 + Item.m_ACGItem.m_TemplateID2 + Item.m_XP;
+	}
+	//gets position, iconbox, and item data from clicked inventory item
+	private function GetGridPosition(srcInventory:ID32, srcSlot:Number) {
+		if (srcInventory.GetType() == _global.Enums.InvType.e_Type_GC_BackpackContainer){
+			var Data:Object = new Object();
+			Data.Box = _root.backpack2.GetIconBoxContainingItemSlot(srcInventory, srcSlot);
+			Data.Item = CreateID(Data.Box.GetItemData(srcSlot));
+			var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(srcSlot)
+			var box = Data.Box.GetPos();
+			Data.Pos = new Point(mc._x + box.x + 5, mc._y + box.y + 7 + Data.Box["m_TopBarHeight"])
+			Data.EndPos = m_UpgradeInventory.GetFirstFreeItemSlot();
+			ItemPositions.push(Data);
+		}
+		//original function
+		_root.itemupgrade.m_Window.m_Content["SlotReceiveItem"](srcInventory, srcSlot);
+	}
+
+	// sends item back to where it came from
+	private function MouseClick(slot:ItemSlot, buttonIndex:Number) {
+		var currentDragObject:DragObject = DragObject.GetCurrentDragObject();
+		if (buttonIndex == 2 && !currentDragObject && !_root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]){
+			for (var i in ItemPositions){
+				var Data = ItemPositions[i];
+				// if previously deposited item or result item.
+				if (Data["Item"] == CreateID(slot.GetData()) || (Data.EndPos == 0 && slot.GetSlotID() == 0 && CreateID(slot.GetData()) == resultItemID) ){
+					_root.backpack2.MoveItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), Data["Box"].m_BoxID, Data["Pos"].x, Data["Pos"].y);
+					delete ItemPositions[i];
+					break
+				}
+			}
+		}
+		//original function, call in case the above function fails
+		if (slot.GetData())_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem(slot, buttonIndex);
+	}
+
+	//gets position, iconbox, and item data from dragged inventory item
+	private function onDragEnd(event:Object){
+		if ( Mouse["IsMouseOver"](_root.itemupgrade) ){
+			if ( event.data.type == "item"){
+				var dstID = _root.itemupgrade.m_Window.m_Content.GetMouseSlotID();
+				if ( dstID >= 0 && dstID != _root.itemupgrade.m_Window.m_Content.RESULT_SLOT && !event.data.split){
+					var Data:Object = new Object();
+					Data.Box = _root.backpack2.GetIconBoxContainingItemSlot(event.data.inventory_id, event.data.inventory_slot);
+					Data.Item = CreateID(Data.Box.GetItemData(event.data.inventory_slot));
+					var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(event.data.inventory_slot)
+					var box = Data.Box.GetPos();
+					Data.EndPos = dstID;
+					Data.Pos = new Point(mc._x + box.x+5, mc._y + box.y + 7 + Data.Box["m_TopBarHeight"])
+					ItemPositions.push(Data);
+				}
+			}
+		}
+		//original function
+		_root.itemupgrade.m_Window.m_Content.onDragEnd(event);
 	}
 
 	private function UpgradeWindowOpened() {
 		Tooltip.Close();
-		warningClip.onRollOver = undefined;
-		warningClip.onRollOut = undefined;
+		ItemPositions = new Array();
+		resultItemID = undefined;
 		if (m_upgradewindow.GetValue()) {
-			//need this to position my stuff
 			if (_root.itemupgrade.m_Window.m_Content.m_LevelUpgrade) {
+				// Used to get grid position when item is right clicked or dragged to upgrade window
+				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotReceiveItem);
+				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Connect(GetGridPosition, this);
+				DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
+				DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
+				
+				//Used to send items back
+				for (var i = 0; i < 8; i++){
+					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem);
+					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Connect(MouseClick, this);
+				}
+				//Exp labels
 				createLabels();
+				//In case there were items in the crafting window
 				RefreshXP();
 			} else {
 				setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 			}
+		}else{
+			DragManager.instance.removeEventListener("dragEnd", this, "onDragEnd" );
+			com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(GetGridPosition, this);
 		}
 	}
 
