@@ -23,6 +23,7 @@ class com.fox.maXPert.maXPert {
 	private var m_remainingGlyphExp:TextField
 	private var m_remainingSignetExp:TextField
 	private var m_UpgradeInventory:Inventory;
+	private var m_EquipmentInventory:Inventory;
 	private var m_Inventory:Inventory;
 	private var refresh;
 	private var m_swfroot:MovieClip;
@@ -36,6 +37,7 @@ class com.fox.maXPert.maXPert {
 		m_upgradewindow = DistributedValue.Create("ItemUpgradeWindow");
 		m_UpgradeInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_CraftingInventory, Character.GetClientCharID().GetInstance()));
 		m_Inventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_BackpackContainer, Character.GetClientCharID().GetInstance()));
+		m_EquipmentInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_WeaponContainer, Character.GetClientCharacter().GetID().GetInstance()));
 
 		/*
 		com.GameInterface.UtilsBase.PrintChatText("Weapon / Talisman");
@@ -334,7 +336,14 @@ class com.fox.maXPert.maXPert {
 		}
 		// equip
 		else if (buttonIndex == 2 && !currentDragObject && _root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
-			m_UpgradeInventory.UseItem(slot.GetSlotID());
+			// Slot already taken
+			if (m_EquipmentInventory.GetItemAt(slot.GetData().m_DefaultPosition)){
+				m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), m_Inventory.GetFirstFreeItemSlot());
+			} 
+			//Equip
+			else{
+				m_UpgradeInventory.UseItem(slot.GetSlotID());
+			}
 			return;
 		}
 		//original function, in case previous function fails, or item is dragged
