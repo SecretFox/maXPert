@@ -355,11 +355,19 @@ class com.fox.maXPert.maXPert {
 		//original function
 		_root.itemupgrade.m_Window.m_Content.onDragEnd(event);
 	}
+	
+	private function UnloadAll(){
+		var slots:Array = _root.itemupgrade.m_Window.m_Content.m_ItemSlots
+		for (var i = 0; i < slots.length; i++){
+			MouseClick(slots[i].m_ItemSlot,2);
+		}
+		_root.itemupgrade.m_Window.m_Content._onUnload();
+		ItemPositions = new Array();
+		resultItemID = undefined;
+	}
 
 	private function UpgradeWindowOpened() {
 		Tooltip.Close();
-		ItemPositions = new Array();
-		resultItemID = undefined;
 		if (m_upgradewindow.GetValue()) {
 			if (_root.itemupgrade.m_Window.m_Content.m_LevelUpgrade) {
 				// Used to get grid position when item is right clicked or dragged to upgrade window
@@ -367,7 +375,10 @@ class com.fox.maXPert.maXPert {
 				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Connect(GetGridPosition, this);
 				DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
 				DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
-				
+				if (!_root.itemupgrade.m_Window.m_Content._onUnload){
+					_root.itemupgrade.m_Window.m_Content._onUnload = _root.itemupgrade.m_Window.m_Content.onUnload;
+					_root.itemupgrade.m_Window.m_Content.onUnload = Delegate.create(this, UnloadAll);
+				}
 				//Used to send items back
 				for (var i = 0; i < 8; i++){
 					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem);
