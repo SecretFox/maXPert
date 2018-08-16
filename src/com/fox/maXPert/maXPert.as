@@ -320,6 +320,7 @@ class com.fox.maXPert.maXPert {
 	// sends item back to where it came from
 	private function MouseClick(slot:ItemSlot, buttonIndex:Number) {
 		var currentDragObject:DragObject = DragObject.GetCurrentDragObject();
+		// move to inventory position
 		if (buttonIndex == 2 && !currentDragObject && !_root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]){
 			for (var i in ItemPositions){
 				var Data = ItemPositions[i];
@@ -331,8 +332,13 @@ class com.fox.maXPert.maXPert {
 				}
 			}
 		}
-		//original function, call in case the above function fails
-		if (slot.GetData())_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem(slot, buttonIndex);
+		// equip
+		else if (buttonIndex == 2 && !currentDragObject && _root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
+			m_UpgradeInventory.UseItem(slot.GetSlotID());
+			return;
+		}
+		//original function, in case previous function fails, or item is dragged
+		if (slot.GetData()) _root.itemupgrade.m_Window.m_Content.SlotMouseUpItem(slot, buttonIndex);
 	}
 
 	//gets position, iconbox, and item data from dragged inventory item
@@ -359,7 +365,7 @@ class com.fox.maXPert.maXPert {
 	private function UnloadAll(){
 		var slots:Array = _root.itemupgrade.m_Window.m_Content.m_ItemSlots
 		for (var i = 0; i < slots.length; i++){
-			MouseClick(slots[i].m_ItemSlot,2);
+			if(slots[i].m_ItemSlot.GetData()) MouseClick(slots[i].m_ItemSlot,2);
 		}
 		_root.itemupgrade.m_Window.m_Content._onUnload();
 		ItemPositions = new Array();
@@ -375,6 +381,7 @@ class com.fox.maXPert.maXPert {
 				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Connect(GetGridPosition, this);
 				DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
 				DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
+				// window closed,move all items back
 				if (!_root.itemupgrade.m_Window.m_Content._onUnload){
 					_root.itemupgrade.m_Window.m_Content._onUnload = _root.itemupgrade.m_Window.m_Content.onUnload;
 					_root.itemupgrade.m_Window.m_Content.onUnload = Delegate.create(this, UnloadAll);
