@@ -336,13 +336,15 @@ class com.fox.maXPert.maXPert {
 		}
 		// equip
 		else if (buttonIndex == 2 && !currentDragObject && _root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
-			// Slot already taken
-			if (m_EquipmentInventory.GetItemAt(slot.GetData().m_DefaultPosition)){
-				m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), m_Inventory.GetFirstFreeItemSlot());
-			} 
+			var pos = slot.GetData().m_DefaultPosition;
 			//Equip
-			else{
+			if (!m_EquipmentInventory.GetItemAt(pos) || (pos == _global.Enums.ItemEquipLocation.e_Wear_First_WeaponSlot && !m_EquipmentInventory.GetItemAt(_global.Enums.ItemEquipLocation.e_Wear_Second_WeaponSlot))){
 				m_UpgradeInventory.UseItem(slot.GetSlotID());
+			}
+			// Slot already taken
+			else{
+				m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), m_Inventory.GetFirstFreeItemSlot());
+				
 			}
 			return;
 		}
