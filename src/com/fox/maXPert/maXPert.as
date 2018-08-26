@@ -1,5 +1,6 @@
 import com.Components.ItemSlot;
 import com.GameInterface.DistributedValue;
+import com.GameInterface.DistributedValueBase;
 import com.Utils.Format;
 import com.Utils.LDBFormat;
 import flash.geom.Point;
@@ -311,7 +312,8 @@ class com.fox.maXPert.maXPert {
 			Data.Item = CreateID(Data.Box.GetItemData(srcSlot));
 			var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(srcSlot)
 			var box = Data.Box.GetPos();
-			Data.Pos = new Point(mc._x + box.x + 5, mc._y + box.y + 7 + Data.Box["m_TopBarHeight"])
+			var multiplier = DistributedValueBase.GetDValue("GUIScaleInventory") / 100;
+			Data.Pos = new Point(mc._x * multiplier + box.x + 5, mc._y * multiplier + box.y + 7 + Data.Box["m_TopBarHeight"] * multiplier);
 			Data.EndPos = m_UpgradeInventory.GetFirstFreeItemSlot();
 			ItemPositions.push(Data);
 		}
@@ -364,7 +366,8 @@ class com.fox.maXPert.maXPert {
 					var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(event.data.inventory_slot)
 					var box = Data.Box.GetPos();
 					Data.EndPos = dstID;
-					Data.Pos = new Point(mc._x + box.x+5, mc._y + box.y + 7 + Data.Box["m_TopBarHeight"])
+					var multiplier = DistributedValueBase.GetDValue("GUIScaleInventory") / 100;
+					Data.Pos = new Point(mc._x * multiplier + box.x + 5, mc._y * multiplier + box.y + 7 + Data.Box["m_TopBarHeight"] * multiplier);
 					ItemPositions.push(Data);
 				}
 			}
