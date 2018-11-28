@@ -1,9 +1,8 @@
+import GUI.Inventory.ItemIconBox;
 import com.Components.ItemSlot;
 import com.GameInterface.DistributedValue;
-import com.GameInterface.DistributedValueBase;
 import com.Utils.Format;
 import com.Utils.LDBFormat;
-import flash.geom.Point;
 import gfx.managers.DragManager;
 import mx.utils.Delegate;
 import com.GameInterface.Game.Character;
@@ -31,7 +30,13 @@ class com.fox.maXPert.maXPert {
 	private var Tooltip:TooltipInterface;
 	private var warningClip:MovieClip;
 	private var resultItemID;
-	private var ItemPositions = new Array();
+	private var ItemPositions = new Array(8);//one for each itemupgrade slot
+	/*	target(0), fusion(1), result(2), empower(3-8)
+	 *
+	 *
+	 *
+	 *
+	*/
 
 	public function maXPert(swfRoot: MovieClip) {
 		m_swfroot = swfRoot;
@@ -128,12 +133,12 @@ class com.fox.maXPert.maXPert {
 		var m_StartItem:InventoryItem = InventoryItem(m_UpgradeInventory.GetItemAt(0));
 		if (m_ResultItem) resultItemID = CreateID(m_ResultItem);
 		else resultItemID = CreateID(m_StartItem);
-		
+
 		if (m_StartItem) {
 			//checking if the item has glyph or signet slotted
 			var GlyphSlotted = m_StartItem.m_ACGItem.m_TemplateID1;
 			var SignetSlotted = m_StartItem.m_ACGItem.m_TemplateID2;
-		//MAIN SLOT
+			//MAIN SLOT
 			// If is NOT Glyph or Signet
 			if (m_StartItem.m_RealType != 30129 && m_StartItem.m_RealType != 30133) {
 				var MaxLevel:Number;
@@ -197,8 +202,8 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingTalismanExp,needed,m_StartItem.m_RealType,m_StartItem.m_Rarity,progress)
 				}
 			}
-		//MAIN SLOT END
-		//GLYPH SLOT START
+			//MAIN SLOT END
+			//GLYPH SLOT START
 			//if current item
 			//a) Has a glyph slotted
 			//b) Is not a glyph or signet(Handled by MAIN)
@@ -215,8 +220,8 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingGlyphExp, needed, 30129, m_StartItem.m_GlyphRarity,progress);
 				}
 			}
-		//GLYPH SLOT END
-		//SIGNET SLOT START
+			//GLYPH SLOT END
+			//SIGNET SLOT START
 			// Return if upgrade item is a weapon,as weapon signets should be ignored
 			switch (m_StartItem.m_RealType) {
 				case 30104:
@@ -246,7 +251,7 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingSignetExp, needed, 30133, m_StartItem.m_SignetRarity,progress);
 				}
 			}
-		//SIGNET SLOT END
+			//SIGNET SLOT END
 		}
 	}
 
@@ -258,10 +263,10 @@ class com.fox.maXPert.maXPert {
 
 		//talisman exp label
 		m_remainingTalismanExp = UpgradeContent.createTextField(
-			'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
-			x, UpgradeContent.m_UpgradeProgress._y + UpgradeContent.m_UpgradeProgress.m_Text._y,
-			0, UpgradeContent.m_UpgradeProgress._height
-		);
+									 'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
+									 x, UpgradeContent.m_UpgradeProgress._y + UpgradeContent.m_UpgradeProgress.m_Text._y,
+									 0, UpgradeContent.m_UpgradeProgress._height
+								 );
 		m_remainingTalismanExp.selectable = false;
 		m_remainingTalismanExp.autoSize = 'left';
 		m_remainingTalismanExp.embedFonts = true;
@@ -269,10 +274,10 @@ class com.fox.maXPert.maXPert {
 		m_remainingTalismanExp.setNewTextFormat(format);
 		//Glyph exp label
 		m_remainingGlyphExp = UpgradeContent.createTextField(
-			'm_RemainingGlyphExp', UpgradeContent.getNextHighestDepth(),
-			x, UpgradeContent.m_GlyphUpgradeProgress._y + UpgradeContent.m_GlyphUpgradeProgress.m_Text._y,
-			0, UpgradeContent.m_GlyphUpgradeProgress._height
-		);
+								  'm_RemainingGlyphExp', UpgradeContent.getNextHighestDepth(),
+								  x, UpgradeContent.m_GlyphUpgradeProgress._y + UpgradeContent.m_GlyphUpgradeProgress.m_Text._y,
+								  0, UpgradeContent.m_GlyphUpgradeProgress._height
+							  );
 		m_remainingGlyphExp.selectable = false;
 		m_remainingGlyphExp.autoSize = 'left';
 		m_remainingGlyphExp.embedFonts = true;
@@ -280,10 +285,10 @@ class com.fox.maXPert.maXPert {
 		m_remainingGlyphExp.setNewTextFormat(format);
 		//Signet exp label
 		m_remainingSignetExp = UpgradeContent.createTextField(
-			'm_RemainingSignetExp', UpgradeContent.getNextHighestDepth(),
-			x, UpgradeContent.m_SignetUpgradeProgress._y + UpgradeContent.m_SignetUpgradeProgress.m_Text._y,
-			0, UpgradeContent.m_SignetUpgradeProgress._height
-		);
+								   'm_RemainingSignetExp', UpgradeContent.getNextHighestDepth(),
+								   x, UpgradeContent.m_SignetUpgradeProgress._y + UpgradeContent.m_SignetUpgradeProgress.m_Text._y,
+								   0, UpgradeContent.m_SignetUpgradeProgress._height
+							   );
 		m_remainingSignetExp.selectable = false;
 		m_remainingSignetExp.autoSize = 'left';
 		m_remainingSignetExp.embedFonts = true;
@@ -301,21 +306,36 @@ class com.fox.maXPert.maXPert {
 		warningClip._y -= 35; // Should probably draw this on the title clip.
 	}
 
-	private function CreateID(Item:InventoryItem){
-		if(Item) return string(Item.m_ACGItem.m_TemplateID0) + Item.m_ACGItem.m_TemplateID1 + Item.m_ACGItem.m_TemplateID2 + Item.m_XP;
+	private function CreateID(Item:InventoryItem) {
+		if (Item) return string(Item.m_ACGItem.m_TemplateID0) + Item.m_ACGItem.m_TemplateID1 + Item.m_ACGItem.m_TemplateID2 + Item.m_XP;
 	}
+	// Gets destination slot for right clicked item
+	private function GetFirstFree() {
+		var firstFree:Number = m_UpgradeInventory.GetFirstFreeItemSlot();
+		if (_root.itemupgrade.m_Window.m_Content.m_CurrentTab == _root.itemupgrade.m_Window.m_Content.EMPOWERMENT_TAB) {
+			while (firstFree == _root.itemupgrade.m_Window.m_Content.FUSION_SLOT || firstFree == _root.itemupgrade.m_Window.m_Content.RESULT_SLOT || m_UpgradeInventory.GetItemAt(firstFree) != undefined) {
+				firstFree ++;
+				if (firstFree > _root.itemupgrade.m_Window.m_Content.EMPOWER_SLOT_4) {
+					return;
+				}
+			}
+		} else if (_root.itemupgrade.m_Window.m_CurrentTab == _root.itemupgrade.m_Window.m_Content.FUSION_TAB) {
+			if (firstFree >= _root.itemupgrade.m_Window.m_Content.RESULT_SLOT) {
+				return;
+			}
+		}
+		return firstFree;
+	}
+
 	//gets position, iconbox, and item data from clicked inventory item
 	private function GetGridPosition(srcInventory:ID32, srcSlot:Number) {
-		if (srcInventory.GetType() == _global.Enums.InvType.e_Type_GC_BackpackContainer){
+		if (srcInventory.GetType() == _global.Enums.InvType.e_Type_GC_BackpackContainer) {
 			var Data:Object = new Object();
 			Data.Box = _root.backpack2.GetIconBoxContainingItemSlot(srcInventory, srcSlot);
 			Data.Item = CreateID(Data.Box.GetItemData(srcSlot));
-			var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(srcSlot)
-			var box = Data.Box.GetPos();
-			var multiplier = DistributedValueBase.GetDValue("GUIScaleInventory") / 100;
-			Data.Pos = new Point(mc._x * multiplier + box.x + 5, mc._y * multiplier + box.y + 7 + Data.Box["m_TopBarHeight"] * multiplier);
-			Data.EndPos = m_UpgradeInventory.GetFirstFreeItemSlot();
-			ItemPositions.push(Data);
+			Data.Pos = Data.Box.GetGridPositionFromSlotID(srcSlot);
+			Data.EndPos = GetFirstFree();
+			if (Data.EndPos != undefined) ItemPositions[Data.EndPos] = Data;
 		}
 		//original function
 		_root.itemupgrade.m_Window.m_Content["SlotReceiveItem"](srcInventory, srcSlot);
@@ -325,14 +345,28 @@ class com.fox.maXPert.maXPert {
 	private function MouseClick(slot:ItemSlot, buttonIndex:Number) {
 		var currentDragObject:DragObject = DragObject.GetCurrentDragObject();
 		// move to inventory position
-		if (buttonIndex == 2 && !currentDragObject && !_root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]){
-			for (var i in ItemPositions){
+		if (buttonIndex == 2 && !currentDragObject && !_root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
+			for (var i = 0; i < ItemPositions.length; i++) {
 				var Data = ItemPositions[i];
 				// if previously deposited item or result item.
-				if (Data["Item"] == CreateID(slot.GetData()) || (Data.EndPos == 0 && slot.GetSlotID() == 0 && CreateID(slot.GetData()) == resultItemID) ){
-					_root.backpack2.MoveItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), Data["Box"].m_BoxID, Data["Pos"].x, Data["Pos"].y);
-					delete ItemPositions[i];
-					break
+				if (Data["Item"] == CreateID(slot.GetData()) || (Data.EndPos == 0 && slot.GetSlotID() == 0 && CreateID(slot.GetData()) == resultItemID) ) {
+					var dstIconBox:ItemIconBox = _root.backpack2.m_IconBoxes[Data["Box"].m_BoxID];
+					var dstSlot:ItemSlot = dstIconBox.GetItemAtGridPosition(Data.Pos);
+					if (dstIconBox != undefined) {
+						//Already occupied, swap the items, occupying item gets placed to first free slot of backpack
+						if (dstSlot != undefined && dstSlot.HasItem()) {
+							m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), dstSlot.GetSlotID());
+						}
+						//free slot, create new grid slot and place item there
+						else {
+							var nextFreeItemSlot:Number = m_Inventory.GetFirstFreeItemSlot();
+							if (nextFreeItemSlot != -1) {
+								dstIconBox.CreateEmptySlot(Data.Pos, nextFreeItemSlot);
+								m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), nextFreeItemSlot); //would return _global.Enums.InventoryAddItemResponse.e_AddItem_Success if succesful
+								ItemPositions[i] = undefined;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -340,13 +374,13 @@ class com.fox.maXPert.maXPert {
 		else if (buttonIndex == 2 && !currentDragObject && _root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
 			var pos = slot.GetData().m_DefaultPosition;
 			//Equip
-			if (!m_EquipmentInventory.GetItemAt(pos) || (pos == _global.Enums.ItemEquipLocation.e_Wear_First_WeaponSlot && !m_EquipmentInventory.GetItemAt(_global.Enums.ItemEquipLocation.e_Wear_Second_WeaponSlot))){
+			if (!m_EquipmentInventory.GetItemAt(pos) || (pos == _global.Enums.ItemEquipLocation.e_Wear_First_WeaponSlot && !m_EquipmentInventory.GetItemAt(_global.Enums.ItemEquipLocation.e_Wear_Second_WeaponSlot))) {
 				m_UpgradeInventory.UseItem(slot.GetSlotID());
 			}
 			// Slot already taken
-			else{
+			else {
 				m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), m_Inventory.GetFirstFreeItemSlot());
-				
+
 			}
 			return;
 		}
@@ -355,34 +389,31 @@ class com.fox.maXPert.maXPert {
 	}
 
 	//gets position, iconbox, and item data from dragged inventory item
-	private function onDragEnd(event:Object){
-		if ( Mouse["IsMouseOver"](_root.itemupgrade) ){
-			if ( event.data.type == "item"){
+	private function onDragEnd(event:Object) {
+		if ( Mouse["IsMouseOver"](_root.itemupgrade) ) {
+			if ( event.data.type == "item") {
 				var dstID = _root.itemupgrade.m_Window.m_Content.GetMouseSlotID();
-				if ( dstID >= 0 && dstID != _root.itemupgrade.m_Window.m_Content.RESULT_SLOT && !event.data.split){
+				if ( dstID >= 0 && dstID != _root.itemupgrade.m_Window.m_Content.RESULT_SLOT && !event.data.split) {
 					var Data:Object = new Object();
 					Data.Box = _root.backpack2.GetIconBoxContainingItemSlot(event.data.inventory_id, event.data.inventory_slot);
 					Data.Item = CreateID(Data.Box.GetItemData(event.data.inventory_slot));
-					var mc:MovieClip = Data.Box.GetMovieClipFromInventoryPosition(event.data.inventory_slot)
-					var box = Data.Box.GetPos();
 					Data.EndPos = dstID;
-					var multiplier = DistributedValueBase.GetDValue("GUIScaleInventory") / 100;
-					Data.Pos = new Point(mc._x * multiplier + box.x + 5, mc._y * multiplier + box.y + 7 + Data.Box["m_TopBarHeight"] * multiplier);
-					ItemPositions.push(Data);
+					Data.Pos = Data.Box.GetGridPositionFromSlotID(event.data.inventory_slot);
+					ItemPositions[Data.EndPos] = Data;
 				}
 			}
 		}
 		//original function
 		_root.itemupgrade.m_Window.m_Content.onDragEnd(event);
 	}
-	
-	private function UnloadAll(){
+
+	private function UnloadAll() {
 		var slots:Array = _root.itemupgrade.m_Window.m_Content.m_ItemSlots
-		for (var i = 0; i < slots.length; i++){
-			if(slots[i].m_ItemSlot.GetData()) MouseClick(slots[i].m_ItemSlot,2);
+		for (var i = 0; i < slots.length; i++) {
+			if (slots[i].m_ItemSlot.GetData()) MouseClick(slots[i].m_ItemSlot, 2);
 		}
 		_root.itemupgrade.m_Window.m_Content._onUnload();
-		ItemPositions = new Array();
+		ItemPositions = new Array(8);
 		resultItemID = undefined;
 	}
 
@@ -396,12 +427,12 @@ class com.fox.maXPert.maXPert {
 				DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
 				DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
 				// window closed,move all items back
-				if (!_root.itemupgrade.m_Window.m_Content._onUnload){
+				if (!_root.itemupgrade.m_Window.m_Content._onUnload) {
 					_root.itemupgrade.m_Window.m_Content._onUnload = _root.itemupgrade.m_Window.m_Content.onUnload;
 					_root.itemupgrade.m_Window.m_Content.onUnload = Delegate.create(this, UnloadAll);
 				}
 				//Used to send items back
-				for (var i = 0; i < 8; i++){
+				for (var i = 0; i < 8; i++) {
 					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem);
 					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Connect(MouseClick, this);
 				}
@@ -412,7 +443,7 @@ class com.fox.maXPert.maXPert {
 			} else {
 				setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 			}
-		}else{
+		} else {
 			DragManager.instance.removeEventListener("dragEnd", this, "onDragEnd" );
 			com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(GetGridPosition, this);
 		}
