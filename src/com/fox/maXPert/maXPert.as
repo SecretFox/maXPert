@@ -31,12 +31,7 @@ class com.fox.maXPert.maXPert {
 	private var warningClip:MovieClip;
 	private var resultItemID;
 	private var ItemPositions = new Array(8);//one for each itemupgrade slot
-	/*	target(0), fusion(1), result(2), empower(3-8)
-	 *
-	 *
-	 *
-	 *
-	*/
+	//	target(0), fusion(1), result(2), empower(3-8)
 
 	public function maXPert(swfRoot: MovieClip) {
 		m_swfroot = swfRoot;
@@ -138,8 +133,8 @@ class com.fox.maXPert.maXPert {
 			//checking if the item has glyph or signet slotted
 			var GlyphSlotted = m_StartItem.m_ACGItem.m_TemplateID1;
 			var SignetSlotted = m_StartItem.m_ACGItem.m_TemplateID2;
-			//MAIN SLOT
-			// If is NOT Glyph or Signet
+		//MAIN SLOT
+			// Weapon or Talisman
 			if (m_StartItem.m_RealType != 30129 && m_StartItem.m_RealType != 30133) {
 				var MaxLevel:Number;
 				//Hardcoded maxlevel, change if patched
@@ -174,7 +169,7 @@ class com.fox.maXPert.maXPert {
 					}
 				}
 			}
-			// else if Glyph
+			// elseif Glyph
 			else if (m_StartItem.m_RealType == 30129 && m_StartItem.m_Rank != 20) {
 				var XpToNextRarity = Inventory.GetItemXPForLevel(30129, m_StartItem.m_GlyphRarity, 20);
 				var needed = XpToNextRarity - m_StartItem.m_GlyphXP;
@@ -188,7 +183,7 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingTalismanExp,needed,m_StartItem.m_RealType,m_StartItem.m_Rarity,progress);
 				}
 			}
-			// else if Signet
+			// elseif Signet
 			else if (m_StartItem.m_RealType == 30133 && m_StartItem.m_Rank!=20) {
 				var XpToNextRarity = Inventory.GetItemXPForLevel(30133, m_StartItem.m_SignetRarity, 20);
 				var needed = XpToNextRarity - m_StartItem.m_SignetXP;
@@ -202,11 +197,13 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingTalismanExp,needed,m_StartItem.m_RealType,m_StartItem.m_Rarity,progress)
 				}
 			}
-			//MAIN SLOT END
-			//GLYPH SLOT START
-			//if current item
-			//a) Has a glyph slotted
-			//b) Is not a glyph or signet(Handled by MAIN)
+		//MAIN SLOT END
+		//GLYPH SLOT START
+			/*
+			 * if current item
+			 * a) Has a glyph slotted
+			 * b) Is not a glyph or signet (handled by MAIN)
+			 */
 			if (GlyphSlotted && m_StartItem.m_RealType != 30133 && m_StartItem.m_RealType != 30129 && m_StartItem.m_GlyphRank != 20) {
 				var XpToNextRarity = Inventory.GetItemXPForLevel(30129, m_StartItem.m_GlyphRarity, 20);
 				var needed = XpToNextRarity - m_StartItem.m_GlyphXP;
@@ -220,8 +217,8 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingGlyphExp, needed, 30129, m_StartItem.m_GlyphRarity,progress);
 				}
 			}
-			//GLYPH SLOT END
-			//SIGNET SLOT START
+		//GLYPH SLOT END
+		//SIGNET SLOT START
 			// Return if upgrade item is a weapon,as weapon signets should be ignored
 			switch (m_StartItem.m_RealType) {
 				case 30104:
@@ -251,7 +248,7 @@ class com.fox.maXPert.maXPert {
 					CheckForWarning(m_remainingSignetExp, needed, 30133, m_StartItem.m_SignetRarity,progress);
 				}
 			}
-			//SIGNET SLOT END
+		//SIGNET SLOT END
 		}
 	}
 
@@ -263,10 +260,10 @@ class com.fox.maXPert.maXPert {
 
 		//talisman exp label
 		m_remainingTalismanExp = UpgradeContent.createTextField(
-									 'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
-									 x, UpgradeContent.m_UpgradeProgress._y + UpgradeContent.m_UpgradeProgress.m_Text._y,
-									 0, UpgradeContent.m_UpgradeProgress._height
-								 );
+			'm_RemainingTalismanExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_UpgradeProgress._y + UpgradeContent.m_UpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_UpgradeProgress._height
+		);
 		m_remainingTalismanExp.selectable = false;
 		m_remainingTalismanExp.autoSize = 'left';
 		m_remainingTalismanExp.embedFonts = true;
@@ -274,10 +271,10 @@ class com.fox.maXPert.maXPert {
 		m_remainingTalismanExp.setNewTextFormat(format);
 		//Glyph exp label
 		m_remainingGlyphExp = UpgradeContent.createTextField(
-								  'm_RemainingGlyphExp', UpgradeContent.getNextHighestDepth(),
-								  x, UpgradeContent.m_GlyphUpgradeProgress._y + UpgradeContent.m_GlyphUpgradeProgress.m_Text._y,
-								  0, UpgradeContent.m_GlyphUpgradeProgress._height
-							  );
+			'm_RemainingGlyphExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_GlyphUpgradeProgress._y + UpgradeContent.m_GlyphUpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_GlyphUpgradeProgress._height
+		);
 		m_remainingGlyphExp.selectable = false;
 		m_remainingGlyphExp.autoSize = 'left';
 		m_remainingGlyphExp.embedFonts = true;
@@ -285,10 +282,10 @@ class com.fox.maXPert.maXPert {
 		m_remainingGlyphExp.setNewTextFormat(format);
 		//Signet exp label
 		m_remainingSignetExp = UpgradeContent.createTextField(
-								   'm_RemainingSignetExp', UpgradeContent.getNextHighestDepth(),
-								   x, UpgradeContent.m_SignetUpgradeProgress._y + UpgradeContent.m_SignetUpgradeProgress.m_Text._y,
-								   0, UpgradeContent.m_SignetUpgradeProgress._height
-							   );
+			'm_RemainingSignetExp', UpgradeContent.getNextHighestDepth(),
+			x, UpgradeContent.m_SignetUpgradeProgress._y + UpgradeContent.m_SignetUpgradeProgress.m_Text._y,
+			0, UpgradeContent.m_SignetUpgradeProgress._height
+		);
 		m_remainingSignetExp.selectable = false;
 		m_remainingSignetExp.autoSize = 'left';
 		m_remainingSignetExp.embedFonts = true;
@@ -305,7 +302,7 @@ class com.fox.maXPert.maXPert {
 		warningClip.endFill();
 		warningClip._y -= 35; // Should probably draw this on the title clip.
 	}
-
+	
 	private function CreateID(Item:InventoryItem) {
 		if (Item) return string(Item.m_ACGItem.m_TemplateID0) + Item.m_ACGItem.m_TemplateID1 + Item.m_ACGItem.m_TemplateID2 + Item.m_XP;
 	}
@@ -344,7 +341,7 @@ class com.fox.maXPert.maXPert {
 	// sends item back to where it came from
 	private function MouseClick(slot:ItemSlot, buttonIndex:Number) {
 		var currentDragObject:DragObject = DragObject.GetCurrentDragObject();
-		// move to inventory position
+		// Move to inventory
 		if (buttonIndex == 2 && !currentDragObject && !_root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
 			for (var i = 0; i < ItemPositions.length; i++) {
 				var Data = ItemPositions[i];
@@ -370,7 +367,7 @@ class com.fox.maXPert.maXPert {
 				}
 			}
 		}
-		// equip
+		// Move to equipped
 		else if (buttonIndex == 2 && !currentDragObject && _root.itemupgrade.m_Window.m_Content.m_FromEquipped[slot.GetSlotID()]) {
 			var pos = slot.GetData().m_DefaultPosition;
 			//Equip
@@ -380,11 +377,10 @@ class com.fox.maXPert.maXPert {
 			// Slot already taken
 			else {
 				m_Inventory.AddItem(m_UpgradeInventory.GetInventoryID(), slot.GetSlotID(), m_Inventory.GetFirstFreeItemSlot());
-
 			}
 			return;
 		}
-		//original function, in case previous function fails, or item is dragged
+		//original function, in case previous function fails
 		if (slot.GetData()) _root.itemupgrade.m_Window.m_Content.SlotMouseUpItem(slot, buttonIndex);
 	}
 
@@ -407,6 +403,7 @@ class com.fox.maXPert.maXPert {
 		_root.itemupgrade.m_Window.m_Content.onDragEnd(event);
 	}
 
+	//Sends all crafting items back to their original slots
 	private function UnloadAll() {
 		var slots:Array = _root.itemupgrade.m_Window.m_Content.m_ItemSlots
 		for (var i = 0; i < slots.length; i++) {
@@ -438,7 +435,7 @@ class com.fox.maXPert.maXPert {
 				}
 				//Exp labels
 				createLabels();
-				//In case there were items in the crafting window
+				//In case there were items stuck in the crafting window
 				RefreshXP();
 			} else {
 				setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
