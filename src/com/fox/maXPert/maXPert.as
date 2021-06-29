@@ -1,6 +1,4 @@
-import GUI.Inventory.ItemIconBox;
 import com.Components.ItemSlot;
-import com.GameInterface.DistributedValue;
 import com.Utils.Format;
 import com.Utils.LDBFormat;
 import gfx.managers.DragManager;
@@ -18,7 +16,6 @@ import com.Utils.DragObject;
 class com.fox.maXPert.maXPert {
 
 	private var m_expContainer:MovieClip
-	private var m_upgradewindow:DistributedValue
 	private var m_remainingTalismanExp:TextField
 	private var m_remainingGlyphExp:TextField
 	private var m_remainingSignetExp:TextField
@@ -26,7 +23,6 @@ class com.fox.maXPert.maXPert {
 	private var m_EquipmentInventory:Inventory;
 	private var m_Inventory:Inventory;
 	private var refresh;
-	private var m_swfroot:MovieClip;
 	private var Tooltip:TooltipInterface;
 	private var warningClip:MovieClip;
 	private var resultItemID;
@@ -34,8 +30,6 @@ class com.fox.maXPert.maXPert {
 	//	target(0), fusion(1), result(2), empower(3-8)
 
 	public function maXPert(swfRoot: MovieClip) {
-		m_swfroot = swfRoot;
-		m_upgradewindow = DistributedValue.Create("ItemUpgradeWindow");
 		m_UpgradeInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_CraftingInventory, Character.GetClientCharID().GetInstance()));
 		m_Inventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_BackpackContainer, Character.GetClientCharID().GetInstance()));
 		m_EquipmentInventory = new Inventory(new ID32(_global.Enums.InvType.e_Type_GC_WeaponContainer, Character.GetClientCharacter().GetID().GetInstance()));
@@ -84,9 +78,7 @@ class com.fox.maXPert.maXPert {
 	}
 
 	public function Load() {
-		m_upgradewindow.SignalChanged.Connect(UpgradeWindowOpened, this);
 		CraftingInterface.SignalCraftingResultFeedback.Connect(RefreshXP, this);
-		setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 	}
 
 	public function Unload() {
@@ -94,8 +86,9 @@ class com.fox.maXPert.maXPert {
 		warningClip.onRollOver = undefined;
 		warningClip.onRollOut = undefined;
 		m_expContainer.removeMovieClip();
-		m_upgradewindow.SignalChanged.Disconnect(UpgradeWindowOpened, this);
 		CraftingInterface.SignalCraftingResultFeedback.Disconnect(RefreshXP, this);
+		DragManager.instance.removeEventListener("dragEnd", this, "onDragEnd" );
+		com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(GetGridPosition, this);
 	}
 
 	// Checks if item is overcapped by at least a level
@@ -347,7 +340,7 @@ class com.fox.maXPert.maXPert {
 				var Data = ItemPositions[i];
 				// if previously deposited item or result item.
 				if (Data["Item"] == CreateID(slot.GetData()) || (Data.EndPos == 0 && slot.GetSlotID() == 0 && CreateID(slot.GetData()) == resultItemID) ) {
-					var dstIconBox:ItemIconBox = _root.backpack2.m_IconBoxes[Data["Box"].m_BoxID];
+					var dstIconBox = _root.backpack2.m_IconBoxes[Data["Box"].m_BoxID];
 					var dstSlot:ItemSlot = dstIconBox.GetItemAtGridPosition(Data.Pos);
 					if (dstIconBox != undefined) {
 						//Already occupied, swap the items, occupying item gets placed to first free slot of backpack
@@ -416,33 +409,28 @@ class com.fox.maXPert.maXPert {
 
 	private function UpgradeWindowOpened() {
 		Tooltip.Close();
-		if (m_upgradewindow.GetValue()) {
-			if (_root.itemupgrade.m_Window.m_Content.m_LevelUpgrade) {
-				// Used to get grid position when item is right clicked or dragged to upgrade window
-				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotReceiveItem);
-				com.Utils.GlobalSignal.SignalSendItemToUpgrade.Connect(GetGridPosition, this);
-				DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
-				DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
-				// window closed,move all items back
-				if (!_root.itemupgrade.m_Window.m_Content._onUnload) {
-					_root.itemupgrade.m_Window.m_Content._onUnload = _root.itemupgrade.m_Window.m_Content.onUnload;
-					_root.itemupgrade.m_Window.m_Content.onUnload = Delegate.create(this, UnloadAll);
-				}
-				//Used to send items back
-				for (var i = 0; i < 8; i++) {
-					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem);
-					_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Connect(MouseClick, this);
-				}
-				//Exp labels
-				createLabels();
-				//In case there were items stuck in the crafting window
-				RefreshXP();
-			} else {
-				setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
+		if (_root.itemupgrade.m_Window.m_Content.m_LevelUpgrade) {
+			// Used to get grid position when item is right clicked or dragged to upgrade window
+			com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotReceiveItem);
+			com.Utils.GlobalSignal.SignalSendItemToUpgrade.Connect(GetGridPosition, this);
+			DragManager.instance.addEventListener("dragEnd", this, "onDragEnd" );
+			DragManager.instance.removeEventListener("dragEnd", _root.itemupgrade.m_Window.m_Content, "onDragEnd" );
+			// window closed,move all items back
+			if (!_root.itemupgrade.m_Window.m_Content._onUnload) {
+				_root.itemupgrade.m_Window.m_Content._onUnload = _root.itemupgrade.m_Window.m_Content.onUnload;
+				_root.itemupgrade.m_Window.m_Content.onUnload = Delegate.create(this, UnloadAll);
 			}
+			//Used to send items back
+			for (var i = 0; i < 8; i++) {
+				_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Disconnect(_root.itemupgrade.m_Window.m_Content.SlotMouseUpItem);
+				_root.itemupgrade.m_Window.m_Content.m_ItemSlots[i].m_ItemSlot.SignalMouseUp.Connect(MouseClick, this);
+			}
+			//Exp labels
+			createLabels();
+			//In case there were items stuck in the crafting window
+			RefreshXP();
 		} else {
-			DragManager.instance.removeEventListener("dragEnd", this, "onDragEnd" );
-			com.Utils.GlobalSignal.SignalSendItemToUpgrade.Disconnect(GetGridPosition, this);
+			setTimeout(Delegate.create(this, UpgradeWindowOpened), 50);
 		}
 	}
 

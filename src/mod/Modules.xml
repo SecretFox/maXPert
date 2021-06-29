@@ -6,6 +6,6 @@
     depth_layer = "Top"
     sub_depth   = "2"
     variable    = "maXPert"
-    criteria    = "maXPert &amp;&amp; (guimode &amp; (GUIMODEFLAGS_INPLAY | GUIMODEFLAGS_ENABLEALLGUI))"
+    criteria    = "maXPert &amp;&amp; ItemUpgradeWindow &amp;&amp; (guimode &amp; (GUIMODEFLAGS_INPLAY | GUIMODEFLAGS_ENABLEALLGUI))"
   />
 </Root>
